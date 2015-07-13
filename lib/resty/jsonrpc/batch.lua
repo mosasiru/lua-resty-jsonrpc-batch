@@ -91,12 +91,13 @@ function _M.batch_request(self, params)
             error("Invalid request: table is empty")
         elseif is_array == -1 then
             -- single request
-            self:before_subrequest(client_req)
+            local ctx = {}
+            self:before_subrequest(ctx, client_req)
             local subreq_resp = ngx.location.capture(
                 _path(params.path, client_req),
                 { method = method, body = body }
             )
-            self:after_subrequest({subreq_resp}, client_req)
+            self:after_subrequest(ctx, {subreq_resp}, client_req)
     
             local client_res
             if subreq_resp.status == ngx.HTTP_OK then
