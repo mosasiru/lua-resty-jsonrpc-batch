@@ -51,7 +51,7 @@ server {
         local jsonrpc_batch = require "resty.jsonrpc.batch"
         -- make limitation to batch request array size
         client = jsonrpc_batch.new({
-            max_batch_request_array_size = 10,
+            max_batch_array_size = 10,
         })
 
         function client.before_subrequest(self, ctx, req)
