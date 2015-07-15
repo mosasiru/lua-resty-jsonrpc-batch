@@ -115,13 +115,13 @@ The options argument is a Lua table holding the following keys:
    The default value is `true`.
 * `before_subrequest` [Function ```function(self, ctx)```]
 
-    Specify the callback function fired just before throw subrequests.  `ctx` argument is a [Context](#Context) Object.
+    Specify the callback function fired just before throw subrequests.  `ctx` argument is a [Context](#context) Object.
 
     For example, you can set nginx variable (`ngx.var`) for logging subrequests, and you can manipulate request parameters dynamically.
 
 * `after_subrequest` [Function ```function(self, ctx)```]
 
-    Specify the callback function fired just after throw subrequests. `ctx` argument is a [Context](#Context) Object.
+    Specify the callback function fired just after throw subrequests. `ctx` argument is a [Context](#context) Object.
 
     For example, we can set nginx variable (`ngx.var`) for logging subrequest results, and we can manipulate subrequest responses dynamically.
 
@@ -150,7 +150,7 @@ It can accept following parameters.
 
     The type can be Function which decides path for each subrequest dynamically.
 
-    `ctx` argument is a [Context](#Context) Object.
+    `ctx` argument is a [Context](#context) Object.
 
     `req` argument is a single request json included by batch request json array. like ```{"id":1, "jsonrpc": "2.0", "params": {"user_id": 1}, "method": "getUser"}```.
 
