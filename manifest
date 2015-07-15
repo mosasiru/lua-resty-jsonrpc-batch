@@ -4,6 +4,11 @@ repository = {
    ["lua-resty-jsonrpc-batch"] = {
       ["0.0.1-1"] = {
          {
+            arch = "src"
+         }
+      },
+      ["0.0.1-2"] = {
+         {
             arch = "rockspec"
          }
       }

@@ -1,7 +1,8 @@
 package = "lua-resty-jsonrpc-batch"
-version = "0.0.1-1"
+version = "0.0.1-2"
 source = {
-   url = "git@github.com:mosasiru/lua-resty-jsonrpc-batch.git"
+   url = "git://github.com/mosasiru/lua-resty-jsonrpc-batch",
+   tag = "v0.0.1"
 }
 description = {
    summary = "The Lua-Openresty implementation of JSON-RPC 2.0 Batch Request.",
