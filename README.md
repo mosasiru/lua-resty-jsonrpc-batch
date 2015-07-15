@@ -220,12 +220,12 @@ Context object is a lua table, and has following keys.
 
   The request json is single request or batch request.
 
-* subreq_reqs [Table]
+* `subreq_reqs` [Table]
 
   The array of subrequests parameters.
   This is the arguments of `ngx.location.capture_multi`.
 
-* subreq_resps [Table]
+* `subreq_resps` [Table]
 
   The array of subrequests responses.
   This is the response of `ngx.location.capture_multi`.
