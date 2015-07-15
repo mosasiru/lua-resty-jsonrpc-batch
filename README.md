@@ -20,20 +20,17 @@ server {
     }
     location /api/batch {
         lua_need_request_body on;
-
+        
         content_by_lua '
-            local jsonrpc_batch = require "resty.jsonrpc.batch"
-            client = jsonrpc_batch.new()
-            -- multi subrequest to /api
+            client = batch:new()
             local res, err = client:batch_request({
-                path = "/api",
-                json = ngx.var.request_body,
-            });
+                path    = "/api",
+                request = ngx.var.request_body,
+            })
             if err then
-                ngx.log(ngx.CRIT, err);
-                ngx.exit(500);
+                ngx.exit(500)
             end
-            ngx.say(res);
+            ngx.say(res)
         ';
     }
 }
@@ -44,25 +41,23 @@ server {
 
 ```lua
 server {
-    -- logging upstream response time
     set $jsonrpc_upstream_response_time  -;
 
     init_by_lua '
         local jsonrpc_batch = require "resty.jsonrpc.batch"
-        -- make limitation to batch request array size
         client = jsonrpc_batch.new({
+            -- make limitation to batch request array size
             max_batch_array_size = 10,
+            -- for logging upstream response time
+            before_subrequest = function(self, ctx, req)
+                ctx.start_at = ngx.now()
+            end,
+            after_subrequest = function(self, ctx, resps, req)
+                local apptime = string.format("%.3f", ngx.now() - ctx.start_at)
+                ngx.var.jsonrpc_upstream_response_time = apptime
+            end,
         })
-
-        function client.before_subrequest(self, ctx, req)
-            ctx.start_at = ngx.now()
-        end
-        function client.after_subrequest(self, ctx, resps, req)
-            local apptime = string.format("%.3f", ngx.now() - ctx.start_at)
-            ngx.var.jsonrpc_upstream_response_time = apptime
-        end
     ';
-
 
     location /api/method/.* {
         -- jsonrpc endpoint
@@ -72,15 +67,12 @@ server {
         lua_need_request_body on;
 
         content_by_lua '
-            local endpoint = function(req)
-                local version = ngx.var.version
-                return "/api/method/" .. req.method
-            end
-
-            -- you can change the endpoint per request
             local res, err = client:batch_request({
-                path = endpoint,
-                json = ngx.var.request_body,
+                -- you can change the endpoint per request
+                path = function(self, ctx, req)
+                    return "/api/method/" .. req.method
+                end
+                request  = ngx.var.request_body,
             });
             if err then
                 ngx.log(ngx.CRIT, err);

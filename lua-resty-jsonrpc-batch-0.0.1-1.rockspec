@@ -10,7 +10,8 @@ description = {
    license = "Apache License, Version 2.0"
 }
 dependencies = {
-   "lua >= 5.1"
+   "lua >= 5.1",
+   "cjson",
 }
 build = {
    type = "builtin",

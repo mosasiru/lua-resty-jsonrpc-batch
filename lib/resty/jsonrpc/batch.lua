@@ -40,7 +40,7 @@ function _M.batch_request(self, params)
         end
 
         if type(request) ~= "table" then
-            self:raise_invalid_error("Invalid Request: type is " ..  type(request))
+            self:raise_invalid_error("Invalid Request: request should be object")
         end
 
         ctx.request = request
