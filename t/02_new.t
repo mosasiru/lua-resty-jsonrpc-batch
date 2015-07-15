@@ -33,8 +33,6 @@ __DATA__
             ngx.say(client.allow_single_request)
             ngx.say(type(client.before_subrequest))
             ngx.say(type(client.after_subrequest))
-            ngx.say(type(client.subrequest_error_response))
-            ngx.say(type(client.invalid_error_response))
         ';
     }
 --- request
@@ -42,8 +40,6 @@ __DATA__
 --- response_body
 true
 true
-function
-function
 function
 function
 --- no_error_log
@@ -60,16 +56,12 @@ function
                 allow_single_request = false,
                 before_subrequest = function () return 1 end,
                 after_subrequest = function () return 2 end,
-                subrequest_error_response = function() return 3 end,
-                invalid_error_response = function() return 4 end,
 
             })
             ngx.say(client.max_batch_array_size)
             ngx.say(client.allow_single_request)
             ngx.say(client.before_subrequest())
             ngx.say(client.after_subrequest())
-            ngx.say(client.subrequest_error_response())
-            ngx.say(client.invalid_error_response())
         ';
     }
 --- request
@@ -79,7 +71,5 @@ function
 false
 1
 2
-3
-4
 --- no_error_log
 [error]

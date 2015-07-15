@@ -9,7 +9,7 @@ my $json = JSON::XS->new->utf8->canonical;
 
 repeat_each(1);
 
-plan tests => repeat_each() * (2 * blocks());
+plan tests => repeat_each() * (3 * blocks());
 
 my $pwd = cwd();
 
@@ -38,7 +38,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: basic
+=== TEST 1: basic ok
 --- http_config eval: $::HttpConfig
 --- config
     location /api {
@@ -48,7 +48,9 @@ __DATA__
         lua_need_request_body on;
         
         content_by_lua '
-            client = batch:new()
+            client = batch:new({
+                max_batch_array_size = 2
+            })
             local res, err = client:batch_request({
                 path    = "/api",
                 request = ngx.var.request_body,
@@ -61,33 +63,53 @@ __DATA__
     }
 --- request eval
 use JSON::XS;
-my $body = JSON::XS->new->canonical->encode({
-    id => 1,
-    jsonrpc => "2.0",
-    params => {},
-    method => "aa"
-});
+my $body = JSON::XS->new->canonical->encode([
+    {
+        id => 1,
+        jsonrpc => "2.0",
+        params => {},
+        method => "aa"
+    },
+    {
+        id => 2,
+        jsonrpc => "2.0",
+        params => {},
+        method => "bb"
+    },
+]);
 "POST /t
 $body"
 --- exp_response_json eval
-{
-    id => 1,
-    jsonrpc => "2.0",
-    params => {},
-    method => "aa"
-}
+[
+    {
+        id => 1,
+        jsonrpc => "2.0",
+        params => {},
+        method => "aa"
+    },
+    {
+        id => 2,
+        jsonrpc => "2.0",
+        params => {},
+        method => "bb"
+    },
+]
+--- no_error_log
+[error]
 
-=== TEST 2: dispatch error
+=== TEST 2: basic ng
 --- http_config eval: $::HttpConfig
 --- config
     location /api {
-        return 404;
+        echo -n $request_body;
     }
     location /t {
         lua_need_request_body on;
         
         content_by_lua '
-            client = batch:new()
+            client = batch:new({
+                max_batch_array_size = 2
+            })
             local res, err = client:batch_request({
                 path    = "/api",
                 request = ngx.var.request_body,
@@ -100,24 +122,37 @@ $body"
     }
 --- request eval
 use JSON::XS;
-my $body = JSON::XS->new->canonical->encode({
-    id => 1,
-    jsonrpc => "2.0",
-    params => {},
-    method => "aa"
-});
+my $body = JSON::XS->new->canonical->encode([
+    {
+        id => 1,
+        jsonrpc => "2.0",
+        params => {},
+        method => "aa"
+    },
+    {
+        id => 2,
+        jsonrpc => "2.0",
+        params => {},
+        method => "bb"
+    },
+    {
+        id => 3,
+        jsonrpc => "2.0",
+        params => {},
+        method => "bb"
+    },
+]);
 "POST /t
 $body"
 --- exp_response_json eval
+use Test::Deep;
 {
     id => undef,
     jsonrpc => "2.0",
     error => {
-        code => "-32603",
-        message => "Internal Error",
-        data => {
-            code => "404",
-            message => "",
-        }
+        code => "-32600",
+        message => re('^Invalid Request'),
     }
-}
+},
+--- no_error_log
+[error]

@@ -9,7 +9,7 @@ my $json = JSON::XS->new->utf8->canonical;
 
 repeat_each(1);
 
-plan tests => repeat_each() * (2 * blocks());
+plan tests => repeat_each() * (3 * blocks());
 
 my $pwd = cwd();
 
@@ -38,9 +38,12 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: basic
+=== TEST 1: basic ok
 --- http_config eval: $::HttpConfig
 --- config
+    location /before {
+        echo -n "response changed";
+    }
     location /api {
         echo -n $request_body;
     }
@@ -49,13 +52,19 @@ __DATA__
         
         content_by_lua '
             client = batch:new({
-                allow_single_request = false,
+                before_subrequest = function(self, ctx)
+                    ctx.subreq_reqs[1][1] = "/before"
+                end,
+                after_subrequest = function(self, ctx)
+                    ctx.subreq_resps[1].status = 401 
+                end
             })
             local res, err = client:batch_request({
                 path    = "/api",
                 request = ngx.var.request_body,
             })
             if err then
+                ngx.log(ngx.CRIT, err)
                 ngx.exit(500)
             end
             ngx.say(res)
@@ -63,22 +72,30 @@ __DATA__
     }
 --- request eval
 use JSON::XS;
-my $body = JSON::XS->new->canonical->encode({
-    id => 1,
-    jsonrpc => "2.0",
-    params => {},
-    method => "aa"
-});
+my $body = JSON::XS->new->canonical->encode([
+    {
+        id => 1,
+        jsonrpc => "2.0",
+        params => {},
+        method => "aa"
+    },
+]);
 "POST /t
 $body"
 --- exp_response_json eval
-use Test::Deep;
-{
-    id => 1,
-    jsonrpc => "2.0",
-    error => {
-        code    => "-32600",
-        message => re('^Invalid Request'),
+[
+    {
+        id      => 1,
+        jsonrpc => '2.0',
+        error => {
+            code    => -32603,
+            message => "Internal Error",
+            data    => {
+                code    => 401,
+                message => "response changed"
+            }
+        },
     }
-}
-
+]
+--- no_error_log
+[error]

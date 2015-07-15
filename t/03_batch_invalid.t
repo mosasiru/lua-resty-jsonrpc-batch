@@ -9,7 +9,7 @@ my $json = JSON::XS->new->utf8->canonical;
 
 repeat_each(1);
 
-plan tests => repeat_each() * (6 * blocks());
+plan tests => repeat_each() * (9 * blocks());
 
 my $pwd = cwd();
 
@@ -27,9 +27,6 @@ $ENV{TEST_NGINX_RESOLVER} = '8.8.8.8';
 
 add_response_body_check(sub {
         my ($block, $body, $req_idx, $repeated_req_idx, $dry_run) = @_;
-        note explain $req_idx;
-        note explain $body;
- 
         my $name = $block->name;
  
         my $res = $json->decode($body);
@@ -77,3 +74,5 @@ __DATA__
     "POST /t\n aaa",
     "POST /t\n[]",
 ]
+--- no_error_log
+[error]
